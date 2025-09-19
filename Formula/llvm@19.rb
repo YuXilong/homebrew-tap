@@ -1,4 +1,4 @@
-class AppleLlvmAT19 < Formula
+class LlvmAT19 < Formula
   desc "Next-gen compiler infrastructure"
   homepage "https://github.com/YuXilong/llvm-project-swift/"
   url "https://github.com/YuXilong/llvm-project-swift/releases/download/swift-6.2-RELEASE/llvm-project-swift-6.2-RELEASE.tar.xz"
@@ -14,8 +14,7 @@ class AppleLlvmAT19 < Formula
   no_autobump! because: :requires_manual_review
 
   bottle do
-    rebuild 1
-    sha256 cellar: :any, arm64_tahoe: "ddc2659c621af17d6394a35e10361b45af78b4222e01602c634fe4bc06690870"
+    sha256 cellar: :any, arm64_tahoe: "5058fccc1a6ac469a665cce89748d276b23386ebb3c4bcaebad1e6e733c7a1b9"
   end
 
   keg_only :versioned_formula
