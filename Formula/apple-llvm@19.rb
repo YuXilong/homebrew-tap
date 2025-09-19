@@ -13,9 +13,10 @@ class AppleLlvmAT19 < Formula
 
   no_autobump! because: :requires_manual_review
 
-  # bottle do
-  #   sha256 cellar: :any,                 arm64_tahoe:   "4728c3c87412df15ef32fde6408dcc29c3450d92e5ae0b6e2b4f7bad46b3f4cc"
-  # end
+  bottle do
+    rebuild 1
+    sha256 cellar: :any, arm64_tahoe: "ddc2659c621af17d6394a35e10361b45af78b4222e01602c634fe4bc06690870"
+  end
 
   keg_only :versioned_formula
 
