@@ -54,10 +54,9 @@ class AppleLlvmAT19 < Formula
               "\\1'#{lib}'"
 
     projects = %w[
+      llvm
       clang
       clang-tools-extra
-      mlir
-      polly
     ]
     runtimes = %w[
       compiler-rt
@@ -91,27 +90,15 @@ class AppleLlvmAT19 < Formula
     # in a non-default prefix. See https://lldb.llvm.org/resources/caveats.html
     args = %W[
       -DLLVM_ENABLE_PROJECTS=#{projects.join(";")}
-      -DLLVM_ENABLE_RUNTIMES=#{runtimes.join(";")}
-      -DLLVM_POLLY_LINK_INTO_TOOLS=ON
-      -DLLVM_BUILD_EXTERNAL_COMPILER_RT=ON
+      -DLLVM_TARGETS_TO_BUILD="AArch64"
+      -DLLVM_INSTALL_UTILS=ON
+      -DCMAKE_OSX_ARCHITECTURES=arm64
       -DLLVM_LINK_LLVM_DYLIB=ON
-      -DLLVM_ENABLE_EH=ON
-      -DLLVM_ENABLE_FFI=ON
-      -DLLVM_ENABLE_RTTI=ON
+      -DCLANG_LINK_CLANG_DYLIB=ON
       -DLLVM_INCLUDE_DOCS=OFF
       -DLLVM_INCLUDE_TESTS=OFF
-      -DLLVM_INSTALL_UTILS=ON
-      -DLLVM_ENABLE_Z3_SOLVER=OFF
-      -DLLVM_OPTIMIZED_TABLEGEN=ON
-      -DLLVM_TARGETS_TO_BUILD=all
       -DLLVM_USE_RELATIVE_PATHS_IN_FILES=ON
       -DLLVM_SOURCE_PREFIX=.
-      -DLLDB_USE_SYSTEM_DEBUGSERVER=ON
-      -DLLDB_ENABLE_PYTHON=OFF
-      -DLLDB_ENABLE_LUA=OFF
-      -DLLDB_ENABLE_LZMA=ON
-      -DLIBOMP_INSTALL_ALIASES=OFF
-      -DLIBCXX_INSTALL_MODULES=ON
       -DCLANG_PYTHON_BINDINGS_VERSIONS=#{python_versions.join(";")}
       -DLLVM_CREATE_XCODE_TOOLCHAIN=OFF
       -DCLANG_FORCE_MATCHING_LIBCLANG_SOVERSION=OFF
@@ -129,66 +116,6 @@ class AppleLlvmAT19 < Formula
 
     runtimes_cmake_args = []
     builtins_cmake_args = []
-
-    if OS.mac?
-      macos_sdk = MacOS.sdk_path_if_needed
-      args << "-DFFI_INCLUDE_DIR=#{macos_sdk}/usr/include/ffi"
-      args << "-DFFI_LIBRARY_DIR=#{macos_sdk}/usr/lib"
-
-      libcxx_install_libdir = lib/"c++"
-      libunwind_install_libdir = lib/"unwind"
-      libcxx_rpaths = [loader_path, rpath(source: libcxx_install_libdir, target: libunwind_install_libdir)]
-
-      args << "-DLLVM_BUILD_LLVM_C_DYLIB=ON"
-      args << "-DLLVM_ENABLE_LIBCXX=ON"
-      args << "-DLIBCXX_PSTL_BACKEND=libdispatch"
-      args << "-DLIBCXX_INSTALL_LIBRARY_DIR=#{libcxx_install_libdir}"
-      args << "-DLIBUNWIND_INSTALL_LIBRARY_DIR=#{libunwind_install_libdir}"
-      args << "-DLIBCXXABI_INSTALL_LIBRARY_DIR=#{libcxx_install_libdir}"
-      runtimes_cmake_args << "-DCMAKE_INSTALL_RPATH=#{libcxx_rpaths.join("|")}"
-
-      # Disable builds for OSes not supported by the CLT SDK.
-      clt_sdk_support_flags = %w[I WATCH TV].map { |os| "-DCOMPILER_RT_ENABLE_#{os}OS=OFF" }
-      builtins_cmake_args += clt_sdk_support_flags
-    else
-      args << "-DFFI_INCLUDE_DIR=#{Formula["libffi"].opt_include}"
-      args << "-DFFI_LIBRARY_DIR=#{Formula["libffi"].opt_lib}"
-
-      # Disable `libxml2` which isn't very useful.
-      args << "-DLLVM_ENABLE_LIBXML2=OFF"
-      args << "-DLLVM_ENABLE_LIBCXX=OFF"
-      args << "-DCLANG_DEFAULT_CXX_STDLIB=libstdc++"
-      # Enable llvm gold plugin for LTO
-      args << "-DLLVM_BINUTILS_INCDIR=#{Formula["binutils"].opt_include}"
-      # Parts of Polly fail to correctly build with PIC when being used for DSOs.
-      args << "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
-      runtimes_cmake_args += %w[
-        -DLLVM_ENABLE_PER_TARGET_RUNTIME_DIR=OFF
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON
-
-        -DLIBCXX_ENABLE_STATIC_ABI_LIBRARY=ON
-        -DLIBCXX_STATICALLY_LINK_ABI_IN_SHARED_LIBRARY=OFF
-        -DLIBCXX_STATICALLY_LINK_ABI_IN_STATIC_LIBRARY=ON
-        -DLIBCXX_USE_COMPILER_RT=ON
-        -DLIBCXX_HAS_ATOMIC_LIB=OFF
-
-        -DLIBCXXABI_ENABLE_STATIC_UNWINDER=ON
-        -DLIBCXXABI_STATICALLY_LINK_UNWINDER_IN_SHARED_LIBRARY=OFF
-        -DLIBCXXABI_STATICALLY_LINK_UNWINDER_IN_STATIC_LIBRARY=ON
-        -DLIBCXXABI_USE_COMPILER_RT=ON
-        -DLIBCXXABI_USE_LLVM_UNWINDER=ON
-
-        -DLIBUNWIND_USE_COMPILER_RT=ON
-        -DCOMPILER_RT_USE_BUILTINS_LIBRARY=ON
-        -DCOMPILER_RT_USE_LLVM_UNWINDER=ON
-
-        -DSANITIZER_CXX_ABI=libc++
-        -DSANITIZER_TEST_CXX=libc++
-      ]
-
-      # Prevent compiler-rt from building i386 targets, as this is not portable.
-      builtins_cmake_args << "-DCOMPILER_RT_DEFAULT_TARGET_ONLY=ON"
-    end
 
     if ENV.cflags.present?
       args << "-DCMAKE_C_FLAGS=#{ENV.cflags}"
