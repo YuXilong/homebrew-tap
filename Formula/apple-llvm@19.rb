@@ -90,7 +90,7 @@ class AppleLlvmAT19 < Formula
     # in a non-default prefix. See https://lldb.llvm.org/resources/caveats.html
     args = %W[
       -DLLVM_ENABLE_PROJECTS=#{projects.join(";")}
-      -DLLVM_TARGETS_TO_BUILD="AArch64"
+      -DLLVM_TARGETS_TO_BUILD=AArch64
       -DLLVM_INSTALL_UTILS=ON
       -DCMAKE_OSX_ARCHITECTURES=arm64
       -DLLVM_LINK_LLVM_DYLIB=ON
