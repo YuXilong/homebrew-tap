@@ -15,7 +15,7 @@ class LlvmAT19 < Formula
   no_autobump! because: :requires_manual_review
 
   bottle do
-    root_url "https://ghcr.io/yuxilong/homebrew-tap"
+    # root_url "https://ghcr.io/yuxilong/homebrew-tap"
     rebuild 1
     sha256 cellar: :any, arm64_tahoe: "12e05ad58da73a165ac66f96197d00652711226faed52f376d573fed174942e3"
   end
