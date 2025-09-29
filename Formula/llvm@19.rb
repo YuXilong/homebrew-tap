@@ -16,8 +16,8 @@ class LlvmAT19 < Formula
 
   bottle do
     # root_url "https://ghcr.io/yuxilong/homebrew-tap"
-    rebuild 1
-    sha256 cellar: :any, arm64_tahoe: "12e05ad58da73a165ac66f96197d00652711226faed52f376d573fed174942e3"
+    rebuild 2
+    sha256 cellar: :any, arm64_tahoe: "1581e9a70f521bd51995c5c020316feb6695e52c12c92d4ad03f874cf182c04d"
   end
 
   keg_only :versioned_formula
