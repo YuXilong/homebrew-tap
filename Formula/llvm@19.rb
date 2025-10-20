@@ -15,7 +15,7 @@ class LlvmAT19 < Formula
   no_autobump! because: :requires_manual_review
 
   bottle do
-    root_url "https://ghcr.io/yuxilong/homebrew-tap"
+    root_url "https://github.com/YuXilong/homebrew-tap/releases/download/Apple-LLVM19.1.5/"
     rebuild 2
     sha256 cellar: :any, arm64_tahoe: "1581e9a70f521bd51995c5c020316feb6695e52c12c92d4ad03f874cf182c04d"
   end
