@@ -2,7 +2,7 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  version "3.0.8"
+  version "3.0.9"
   license :cannot_represent
 
   no_autobump! because: :requires_manual_review
