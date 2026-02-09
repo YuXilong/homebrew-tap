@@ -15,7 +15,7 @@ class AppleLlvmAT19 < Formula
 
   bottle do
     root_url "https://github.com/YuXilong/homebrew-tap/releases/download/apple-llvm-19.1.5"
-    sha256 cellar: :any, arm64_tahoe: "fe371e19a18d5350c9782dc0db9e03b57aa5c415b8d7374bbbc11dc07e0aaf74"
+    sha256 cellar: :any, arm64_tahoe: "561b9f5524ce010122ec355fde14df24c33836564cba63091ce846a3fc39064f"
   end
 
   keg_only :versioned_formula
