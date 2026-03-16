@@ -7,7 +7,7 @@ class Wukong < Formula
 
   no_autobump! because: :requires_manual_review
 
-  depends_on "cocoapods"
+  depends_on "ruby@3.3"
 
   on_macos do
     if Hardware::CPU.arm?
@@ -28,6 +28,14 @@ class Wukong < Formula
   end
 
   def post_install
+    # 配置 gem 使用国内镜像源并安装 CocoaPods 1.15.2
+    ruby_bin = Formula["ruby@3.3"].opt_bin
+    gem_cmd = ruby_bin/"gem"
+
+    system gem_cmd, "sources", "--remove", "https://rubygems.org/"
+    system gem_cmd, "sources", "--add", "https://gems.ruby-china.com/"
+    system gem_cmd, "install", "cocoapods", "-v", "1.15.2"
+
     # 更新 wukong 自身配置与 CocoaPods 插件
     system bin/"wukong", "update"
     system bin/"wukong", "update", "--pod-plugins"
@@ -51,6 +59,10 @@ class Wukong < Formula
   def caveats
     <<~EOS
       wukong 已安装完成。
+
+      CocoaPods 1.15.2 已通过 gem 安装（使用 ruby-china 镜像源）。
+      请确保 Ruby 3.3 的 gem bin 目录在 PATH 中：
+        echo 'export PATH="#{Formula["ruby@3.3"].opt_bin}:$PATH"' >> ~/.zshrc
 
       如果你尚未设置 GIT_LAB_HOST 环境变量，请手动添加私有仓库：
         export GIT_LAB_HOST=your-gitlab-host
