@@ -12,7 +12,7 @@ class Wukong < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_#{version}"
-      sha256 "5baefc75ec4e701d6e0e3327b0303485bb39bba3178e1e3ad49aa7b9b3f40436"
+      sha256 "3bc3ed2e3fc6244c80dfc71825ae371b0fc9a8f14affa22edf0277af48ab3f36"
     elsif Hardware::CPU.intel?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_#{version}"
       sha256 "f7bbb239fcade7ea9f1c7b9edeb300dec26dbf5875e0249a4761eab4a94d37a1"
