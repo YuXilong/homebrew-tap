@@ -28,10 +28,9 @@ class Wukong < Formula
   end
 
   def post_install
-    # 将 ruby@3.3 的 bin 和 gem bin 注入当前进程 PATH，确保 post_install 内立即可用
-    ruby_prefix = Formula["ruby@3.3"].opt_prefix
-    ruby_bin = ruby_prefix/"bin"
-    gem_bin = ruby_prefix/"lib/ruby/gems/3.3.0/bin"
+    # ruby@3.3 是 keg-only，gem 可执行文件安装到 HOMEBREW_PREFIX/lib/ruby/gems/3.3.0/bin
+    ruby_bin = Formula["ruby@3.3"].opt_bin
+    gem_bin = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
     ENV.prepend_path "PATH", gem_bin.to_s
     ENV.prepend_path "PATH", ruby_bin.to_s
 
