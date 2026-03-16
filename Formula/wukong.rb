@@ -28,13 +28,31 @@ class Wukong < Formula
   end
 
   def post_install
-    # 配置 gem 使用国内镜像源并安装 CocoaPods 1.15.2
-    ruby_bin = Formula["ruby@3.3"].opt_bin
+    # 将 ruby@3.3 的 bin 和 gem bin 注入当前进程 PATH，确保 post_install 内立即可用
+    ruby_prefix = Formula["ruby@3.3"].opt_prefix
+    ruby_bin = ruby_prefix/"bin"
+    gem_bin = ruby_prefix/"lib/ruby/gems/3.3.0/bin"
+    ENV.prepend_path "PATH", gem_bin.to_s
+    ENV.prepend_path "PATH", ruby_bin.to_s
+
     gem_cmd = ruby_bin/"gem"
 
+    # 配置 gem 使用国内镜像源并安装 CocoaPods 1.15.2
     system gem_cmd, "sources", "--remove", "https://rubygems.org/"
     system gem_cmd, "sources", "--add", "https://gems.ruby-china.com/"
     system gem_cmd, "install", "cocoapods", "-v", "1.15.2"
+
+    # 将 ruby@3.3 路径写入 ~/.zshrc，确保新终端也生效
+    zshrc = File.expand_path("~/.zshrc")
+    marker = "# >>> wukong ruby@3.3 >>>"
+    unless File.exist?(zshrc) && File.read(zshrc).include?(marker)
+      File.open(zshrc, "a") do |f|
+        f.puts ""
+        f.puts marker
+        f.puts "export PATH=\"#{ruby_bin}:#{gem_bin}:$PATH\""
+        f.puts "# <<< wukong ruby@3.3 <<<"
+      end
+    end
 
     # 更新 wukong 自身配置与 CocoaPods 插件
     system bin/"wukong", "update"
@@ -60,9 +78,9 @@ class Wukong < Formula
     <<~EOS
       wukong 已安装完成。
 
-      CocoaPods 1.15.2 已通过 gem 安装（使用 ruby-china 镜像源）。
-      请确保 Ruby 3.3 的 gem bin 目录在 PATH 中：
-        echo 'export PATH="#{Formula["ruby@3.3"].opt_bin}:$PATH"' >> ~/.zshrc
+      Ruby 3.3 和 CocoaPods 1.15.2 已自动配置。
+      PATH 已写入 ~/.zshrc，请重新打开终端或执行：
+        source ~/.zshrc
 
       如果你尚未设置 GIT_LAB_HOST 环境变量，请手动添加私有仓库：
         export GIT_LAB_HOST=your-gitlab-host
