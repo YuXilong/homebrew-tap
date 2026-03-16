@@ -7,6 +7,8 @@ class Wukong < Formula
 
   no_autobump! because: :requires_manual_review
 
+  depends_on "cocoapods"
+
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_#{version}"
@@ -23,6 +25,38 @@ class Wukong < Formula
     elsif Hardware::CPU.intel?
       bin.install "wukong_x86_64_#{version}" => "wukong"
     end
+  end
+
+  def post_install
+    # 更新 wukong 自身配置与 CocoaPods 插件
+    system bin/"wukong", "update"
+    system bin/"wukong", "update", "--pod-plugins"
+
+    # 添加私有 CocoaPods 仓库（需要 GIT_LAB_HOST 环境变量）
+    git_lab_host = ENV["GIT_LAB_HOST"]
+    if git_lab_host && !git_lab_host.empty?
+      repos_dir = File.expand_path("~/.cocoapods/repos/BaiTuFrameworkPods")
+      unless Dir.exist?(repos_dir)
+        system "pod", "repo", "add", "BaiTuFrameworkPods",
+               "https://#{git_lab_host}/ios_framework/frameworkpods.git"
+      end
+      system "pod", "repo", "update", "BaiTuFrameworkPods"
+    else
+      opoo "GIT_LAB_HOST 未设置，跳过 BaiTuFrameworkPods 仓库配置。\n" \
+           "安装后请手动执行：\n" \
+           "  pod repo add BaiTuFrameworkPods https://<YOUR_GITLAB_HOST>/ios_framework/frameworkpods.git"
+    end
+  end
+
+  def caveats
+    <<~EOS
+      wukong 已安装完成。
+
+      如果你尚未设置 GIT_LAB_HOST 环境变量，请手动添加私有仓库：
+        export GIT_LAB_HOST=your-gitlab-host
+        pod repo add BaiTuFrameworkPods https://$GIT_LAB_HOST/ios_framework/frameworkpods.git
+        pod repo update BaiTuFrameworkPods
+    EOS
   end
 
   test do
