@@ -5,7 +5,7 @@ class Wukong < Formula
   version "3.0.10"
   license :cannot_represent
 
-  no_autobump! because: :requires_manual_review
+  no_autobump! because: "uses custom versioned release URLs"
 
   depends_on "ruby@3.3"
 
@@ -28,60 +28,37 @@ class Wukong < Formula
   end
 
   def post_install
-    # ruby@3.3 是 keg-only，gem 可执行文件安装到 HOMEBREW_PREFIX/lib/ruby/gems/3.3.0/bin
     ruby_bin = Formula["ruby@3.3"].opt_bin
-    gem_bin = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
+    gem_home = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0"
+    gem_bin  = gem_home/"bin"
+
+    # 在 sandbox 中必须将 gem 写入 HOMEBREW_PREFIX 可写目录
+    ENV["GEM_HOME"] = gem_home.to_s
+    ENV["GEM_SPEC_CACHE"] = "#{gem_home}/specs"
     ENV.prepend_path "PATH", gem_bin.to_s
     ENV.prepend_path "PATH", ruby_bin.to_s
 
     gem_cmd = ruby_bin/"gem"
 
-    # 配置 gem 使用国内镜像源并安装 CocoaPods 1.15.2
-    system gem_cmd, "sources", "--remove", "https://rubygems.org/"
-    system gem_cmd, "sources", "--add", "https://gems.ruby-china.com/"
-    system gem_cmd, "install", "cocoapods", "-v", "1.15.2"
-
-    # 将 ruby@3.3 路径写入 ~/.zshrc，确保新终端也生效
-    zshrc = File.expand_path("~/.zshrc")
-    marker = "# >>> wukong ruby@3.3 >>>"
-    unless File.exist?(zshrc) && File.read(zshrc).include?(marker)
-      File.open(zshrc, "a") do |f|
-        f.puts ""
-        f.puts marker
-        f.puts "export PATH=\"#{ruby_bin}:#{gem_bin}:$PATH\""
-        f.puts "# <<< wukong ruby@3.3 <<<"
-      end
-    end
-
-    # 更新 wukong 自身配置与 CocoaPods 插件
-    system bin/"wukong", "update"
-    system bin/"wukong", "update", "--pod-plugins"
-
-    # 添加私有 CocoaPods 仓库（需要 GIT_LAB_HOST 环境变量）
-    git_lab_host = ENV["GIT_LAB_HOST"]
-    if git_lab_host && !git_lab_host.empty?
-      repos_dir = File.expand_path("~/.cocoapods/repos/BaiTuFrameworkPods")
-      unless Dir.exist?(repos_dir)
-        system "pod", "repo", "add", "BaiTuFrameworkPods",
-               "https://#{git_lab_host}/ios_framework/frameworkpods.git"
-      end
-      system "pod", "repo", "update", "BaiTuFrameworkPods"
-    else
-      opoo "GIT_LAB_HOST 未设置，跳过 BaiTuFrameworkPods 仓库配置。\n" \
-           "安装后请手动执行：\n" \
-           "  pod repo add BaiTuFrameworkPods https://<YOUR_GITLAB_HOST>/ios_framework/frameworkpods.git"
-    end
+    # 安装 CocoaPods 1.15.2（使用默认 rubygems.org 源）
+    system gem_cmd, "install", "cocoapods", "-v", "1.15.2", "--no-document"
   end
 
   def caveats
+    ruby_bin = Formula["ruby@3.3"].opt_bin
+    gem_bin  = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
     <<~EOS
-      wukong 已安装完成。
+      wukong 已安装完成，CocoaPods 1.15.2 已自动安装。
 
-      Ruby 3.3 和 CocoaPods 1.15.2 已自动配置。
-      PATH 已写入 ~/.zshrc，请重新打开终端或执行：
+      请将以下内容添加到 ~/.zshrc（如尚未添加）：
+        export PATH="#{ruby_bin}:#{gem_bin}:$PATH"
+
+      然后执行以下命令完成初始化：
         source ~/.zshrc
+        wukong update
+        wukong update --pod-plugins
 
-      如果你尚未设置 GIT_LAB_HOST 环境变量，请手动添加私有仓库：
+      如需配置私有仓库：
         export GIT_LAB_HOST=your-gitlab-host
         pod repo add BaiTuFrameworkPods https://$GIT_LAB_HOST/ios_framework/frameworkpods.git
         pod repo update BaiTuFrameworkPods
