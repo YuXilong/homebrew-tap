@@ -28,6 +28,24 @@ class Wukong < Formula
   end
 
   def post_install
+    # 若 ~/.local/bin/wukong 存在（旧版安装位置），替换为指向 Homebrew 版本的符号链接
+    old_wukong = "#{Dir.home}/.local/bin/wukong"
+    brew_wukong = "#{HOMEBREW_PREFIX}/bin/wukong"
+    needs_link = false
+    if File.exist?(old_wukong) && !File.symlink?(old_wukong)
+      needs_link = true
+    elsif File.symlink?(old_wukong) && File.readlink(old_wukong) != brew_wukong
+      needs_link = true
+    end
+
+    if needs_link
+      if Kernel.system("rm", "-f", old_wukong) && Kernel.system("ln", "-sf", brew_wukong, old_wukong)
+        ohai "已将 #{old_wukong} 替换为 -> #{brew_wukong} 的符号链接"
+      else
+        opoo "无法自动替换 #{old_wukong}（sandbox 限制），请手动执行：\n  rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}"
+      end
+    end
+
     ruby_bin = Formula["ruby@3.3"].opt_bin
     gem_home = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0"
     gem_bin  = gem_home/"bin"
@@ -97,11 +115,23 @@ class Wukong < Formula
   def caveats
     ruby_bin = Formula["ruby@3.3"].opt_bin
     gem_bin  = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
+
+    old_wukong = "#{Dir.home}/.local/bin/wukong"
+    brew_wukong = "#{HOMEBREW_PREFIX}/bin/wukong"
+    link_hint = ""
+    if File.exist?(old_wukong) && !File.symlink?(old_wukong)
+      link_hint = <<~HINT
+
+        检测到旧版 wukong，请手动替换为符号链接：
+          rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}
+      HINT
+    end
+
     <<~EOS
       wukong 已安装完成。以下组件已自动安装：
         • CocoaPods 1.15.2
         • cocoapods-publish / cocoapods-packager（从 GitHub 最新 release）
-
+      #{link_hint}
       请将以下内容添加到 ~/.zshrc（如尚未添加）：
         export PATH="#{ruby_bin}:#{gem_bin}:$PATH"
 
