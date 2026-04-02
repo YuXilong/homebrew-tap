@@ -42,13 +42,47 @@ class Wukong < Formula
 
     # 安装 CocoaPods 1.15.2（使用默认 rubygems.org 源）
     system gem_cmd, "install", "cocoapods", "-v", "1.15.2", "--no-document"
+
+    # 从 GitHub 最新 release 下载并安装 cocoapods-publish 和 cocoapods-packager
+    require "tmpdir"
+    tmpdir = Pathname.new(Dir.mktmpdir("wukong_gems"))
+
+    begin
+      ohai "正在从 GitHub 获取最新 CocoaPods 插件..."
+      api_json_file = tmpdir/"release.json"
+      system "curl", "-fsSL",
+             "-H", "Accept: application/vnd.github+json",
+             "-o", api_json_file.to_s,
+             "https://api.github.com/repos/YuXilong/cocoapods-publish/releases/latest"
+
+      require "json"
+      assets = JSON.parse(api_json_file.read)["assets"] || []
+
+      %w[cocoapods-publish cocoapods-packager].each do |gem_name|
+        asset = assets.find { |a| a["name"].start_with?("#{gem_name}-") && a["name"].end_with?(".gem") }
+        next unless asset
+
+        gem_file = tmpdir/asset["name"]
+        system "curl", "-fsSL", "-o", gem_file.to_s, asset["browser_download_url"]
+        system gem_cmd, "install", gem_file.to_s, "--no-document"
+        ohai "已安装 #{asset["name"]}"
+      end
+
+      # 安装 iOS Git Hooks（sandbox 外才能执行 git clone，故放入 caveats 提示）
+    rescue => e
+      opoo "CocoaPods 插件安装失败: #{e.message}（可稍后手动安装）"
+    ensure
+      tmpdir.rmtree if tmpdir.exist?
+    end
   end
 
   def caveats
     ruby_bin = Formula["ruby@3.3"].opt_bin
     gem_bin  = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
     <<~EOS
-      wukong 已安装完成，CocoaPods 1.15.2 已自动安装。
+      wukong 已安装完成。以下组件已自动安装：
+        • CocoaPods 1.15.2
+        • cocoapods-publish / cocoapods-packager（从 GitHub 最新 release）
 
       请将以下内容添加到 ~/.zshrc（如尚未添加）：
         export PATH="#{ruby_bin}:#{gem_bin}:$PATH"
@@ -56,7 +90,9 @@ class Wukong < Formula
       然后执行以下命令完成初始化：
         source ~/.zshrc
         wukong update
-        wukong update --pod-plugins
+
+      安装 iOS Git Hooks（可选）：
+        curl -fsSL https://raw.githubusercontent.com/BaiTu-iOS/ios-git-hooks/main/install.sh | sh
 
       如需配置私有仓库：
         export GIT_LAB_HOST=your-gitlab-host
