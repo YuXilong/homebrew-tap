@@ -40,15 +40,24 @@ class Wukong < Formula
 
     gem_cmd = ruby_bin/"gem"
 
-    # 安装 CocoaPods 1.15.2（使用默认 rubygems.org 源）
-    system gem_cmd, "install", "cocoapods", "-v", "1.15.2", "--no-document"
+    # 检查 gem 是否已安装指定版本
+    installed_gems = `#{gem_cmd} list --local 2>/dev/null`
+
+    # 安装 CocoaPods 1.15.2
+    cocoapods_version = "1.15.2"
+    if installed_gems.match?(/^cocoapods\s.*\b#{Regexp.escape(cocoapods_version)}\b/)
+      ohai "CocoaPods #{cocoapods_version} 已安装，跳过"
+    else
+      ohai "正在安装 CocoaPods #{cocoapods_version}..."
+      system gem_cmd, "install", "cocoapods", "-v", cocoapods_version, "--no-document"
+    end
 
     # 从 GitHub 最新 release 下载并安装 cocoapods-publish 和 cocoapods-packager
     require "tmpdir"
     tmpdir = Pathname.new(Dir.mktmpdir("wukong_gems"))
 
     begin
-      ohai "正在从 GitHub 获取最新 CocoaPods 插件..."
+      ohai "正在从 GitHub 获取最新 CocoaPods 插件信息..."
       api_json_file = tmpdir/"release.json"
       system "curl", "-fsSL",
              "-H", "Accept: application/vnd.github+json",
@@ -62,6 +71,15 @@ class Wukong < Formula
         asset = assets.find { |a| a["name"].start_with?("#{gem_name}-") && a["name"].end_with?(".gem") }
         next unless asset
 
+        # 从文件名提取版本号，如 cocoapods-publish-2.7.7.gem -> 2.7.7
+        remote_version = asset["name"].match(/#{Regexp.escape(gem_name)}-(.+)\.gem/)[1]
+
+        if installed_gems.match?(/^#{Regexp.escape(gem_name)}\s.*\b#{Regexp.escape(remote_version)}\b/)
+          ohai "#{gem_name} #{remote_version} 已安装，跳过"
+          next
+        end
+
+        ohai "正在安装 #{asset["name"]}..."
         gem_file = tmpdir/asset["name"]
         system "curl", "-fsSL", "-o", gem_file.to_s, asset["browser_download_url"]
         system gem_cmd, "install", gem_file.to_s, "--no-document"
