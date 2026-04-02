@@ -2,7 +2,7 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  version "3.0.10"
+  version "3.0.11"
   license :cannot_represent
 
   no_autobump! because: "uses custom versioned release URLs"
@@ -12,10 +12,10 @@ class Wukong < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_#{version}"
-      sha256 "3bc3ed2e3fc6244c80dfc71825ae371b0fc9a8f14affa22edf0277af48ab3f36"
+      sha256 "96df8b9c0aa2158c9a8bf4f1250683d192d5d65e223e34707991837af19199f1"
     elsif Hardware::CPU.intel?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_#{version}"
-      sha256 "f7bbb239fcade7ea9f1c7b9edeb300dec26dbf5875e0249a4761eab4a94d37a1"
+      sha256 "91a12e57dff44b4ea8b2e9afdd6293204e4ffe64037d525657947a54009b1909"
     end
   end
 
