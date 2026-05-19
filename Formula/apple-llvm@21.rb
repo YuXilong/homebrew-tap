@@ -11,8 +11,6 @@ class AppleLlvmAT21 < Formula
     regex(/swift[._-]v?(\d+(?:\.\d+)+)[._-]RELEASE/i)
   end
 
-  no_autobump! because: :requires_manual_review
-
   bottle do
     root_url "https://github.com/YuXilong/homebrew-tap/releases/download/apple-llvm-21.1.6"
     sha256 cellar: :any, arm64_tahoe: "58670d8b9d75ec58dbb4f465e40a078ce33ab33bc9bc1b1add9b35c3ce996b12"

@@ -5,8 +5,6 @@ class Wukong < Formula
   version "3.0.12"
   license :cannot_represent
 
-  no_autobump! because: "uses custom versioned release URLs"
-
   depends_on "ruby@3.3"
 
   on_macos do

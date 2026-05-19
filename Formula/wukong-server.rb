@@ -5,8 +5,6 @@ class WukongServer < Formula
   version "1.0.4"
   license :cannot_represent
 
-  no_autobump! because: :requires_manual_review
-
   depends_on arch: :arm64
 
   url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong-server_arm64_#{version}"

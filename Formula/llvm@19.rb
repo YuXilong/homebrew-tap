@@ -12,8 +12,6 @@ class LlvmAT19 < Formula
   #   regex(/^llvmorg[._-]v?(19(?:\.\d+)+)$/i)
   # end
 
-  no_autobump! because: :requires_manual_review
-
   bottle do
     root_url "https://github.com/YuXilong/homebrew-tap/releases/download/Apple-LLVM19.1.5/"
     rebuild 2
