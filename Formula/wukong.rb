@@ -2,7 +2,7 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  version "3.0.12"
+  version "3.0.13"
   license :cannot_represent
 
   depends_on "ruby@3.3"
@@ -10,10 +10,10 @@ class Wukong < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_#{version}"
-      sha256 "1b58f5f21398b540ac138d9f1148a1a42d2daef5387ddc67bfb43df75fa80d8c"
+      sha256 "09c40b0e651163321573634421c3ee82909162514e7a8d397d5084721853c847"
     elsif Hardware::CPU.intel?
       url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_#{version}"
-      sha256 "b8c3b30c5462136fbc251f83b8cbbdc59c52533ecf533dbf4beda98e0e50b5a7"
+      sha256 "0ab2f2ff430eaddeb7a92898ddc9e0d07d846933a92783dff04ac21871e9bb62"
     end
   end
 
