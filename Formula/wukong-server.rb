@@ -2,13 +2,13 @@
 class WukongServer < Formula
   desc "WuKong MQTT 消息处理服务"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  version "1.0.7"
+  version "1.0.8"
   license :cannot_represent
 
   depends_on arch: :arm64
 
   url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong-server_arm64_#{version}"
-  sha256 "9d47b1662ef83b4d2035bc692de45b6f84228d4ae017d9c5263e6d3ec90d9225"
+  sha256 "7d5570ec6b6469aa0392df63e2322e423757b9a2ac673fd32beb204982184ce4"
 
   def install
     bin.install "wukong-server_arm64_#{version}" => "wukong-server"
