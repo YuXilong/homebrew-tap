@@ -2,8 +2,8 @@ class LlvmAT19 < Formula
   desc "Next-gen compiler infrastructure"
   homepage "https://github.com/YuXilong/llvm-project-swift/"
   url "https://github.com/YuXilong/llvm-project-swift/releases/download/swift-6.2-RELEASE/llvm-project-swift-6.2-RELEASE.tar.xz"
-  sha256 "58735ec90913c71d8ad697cd47339ba41100992c4b89f3bd7ba78f2d57a0c879"
   version "19.1.5"
+  sha256 "58735ec90913c71d8ad697cd47339ba41100992c4b89f3bd7ba78f2d57a0c879"
   # The LLVM Project is under the Apache License v2.0 with LLVM Exceptions
   license "Apache-2.0" => { with: "LLVM-exception" }
 
@@ -57,13 +57,6 @@ class LlvmAT19 < Formula
       llvm
       clang
       clang-tools-extra
-    ]
-    runtimes = %w[
-      compiler-rt
-      libcxx
-      libcxxabi
-      libunwind
-      pstl
     ]
 
     python_versions = Formula.names

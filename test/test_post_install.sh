@@ -16,13 +16,15 @@ echo "[1/6] 检查 ruby@3.3 安装..."
 echo "  RUBY_BIN: ${RUBY_BIN}"
 echo "  BREW_PREFIX: ${BREW_PREFIX}"
 echo "  GEM_BIN: ${GEM_BIN}"
-echo "  ruby version: $("${RUBY_BIN}/ruby" --version)"
+RUBY_VERSION="$("${RUBY_BIN}/ruby" --version)"
+echo "  ruby version: ${RUBY_VERSION}"
 echo "  PASS"
 
 echo ""
 echo "[2/6] 注入 PATH（模拟 ENV.prepend_path）..."
 export PATH="${RUBY_BIN}:${GEM_BIN}:${PATH}"
-echo "  which gem: $(which gem)"
+GEM_PATH="$(command -v gem)"
+echo "  gem path: ${GEM_PATH}"
 echo "  PASS"
 
 echo ""
@@ -40,51 +42,57 @@ echo "  PASS"
 
 echo ""
 echo "[5/6] 验证 pod 命令可用..."
-POD_PATH=$(which pod 2>/dev/null || echo "NOT_FOUND")
+POD_PATH=$(command -v pod 2>/dev/null || echo "NOT_FOUND")
 echo "  pod path: ${POD_PATH}"
-if [ "${POD_PATH}" = "NOT_FOUND" ]; then
-    echo "  FAIL: pod 命令未找到!"
-    echo "  GEM_BIN 目录内容:"
-    ls -la "${GEM_BIN}/" 2>/dev/null || echo "  目录不存在"
-    echo "  gem env gemdir: $(${GEM_CMD} environment gemdir)"
-    exit 1
+if [[ "${POD_PATH}" = "NOT_FOUND" ]]
+then
+  echo "  FAIL: pod 命令未找到!"
+  echo "  GEM_BIN 目录内容:"
+  ls -la "${GEM_BIN}/" 2>/dev/null || echo "  目录不存在"
+  GEM_DIR="$("${GEM_CMD}" environment gemdir)"
+  echo "  gem env gemdir: ${GEM_DIR}"
+  exit 1
 fi
 POD_VERSION=$(pod --version 2>/dev/null || echo "UNKNOWN")
 echo "  pod version: ${POD_VERSION}"
-if [ "${POD_VERSION}" = "1.15.2" ]; then
-    echo "  PASS"
+if [[ "${POD_VERSION}" = "1.15.2" ]]
+then
+  echo "  PASS"
 else
-    echo "  FAIL: 期望 1.15.2，实际 ${POD_VERSION}"
-    exit 1
+  echo "  FAIL: 期望 1.15.2，实际 ${POD_VERSION}"
+  exit 1
 fi
 
 echo ""
 echo "[6/6] 测试 PATH 写入 ~/.zshrc（模拟）..."
-ZSHRC="$HOME/.zshrc"
+ZSHRC="${HOME}/.zshrc"
 MARKER="# >>> wukong ruby@3.3 >>>"
 # 第一次写入
-if [ -f "${ZSHRC}" ] && grep -q "${MARKER}" "${ZSHRC}"; then
-    echo "  标记已存在"
+if [[ -f "${ZSHRC}" ]] && grep -q "${MARKER}" "${ZSHRC}"
+then
+  echo "  标记已存在"
 else
-    {
-        echo ""
-        echo "${MARKER}"
-        echo "export PATH=\"${RUBY_BIN}:${GEM_BIN}:\$PATH\""
-        echo "# <<< wukong ruby@3.3 <<<"
-    } >> "${ZSHRC}"
-    echo "  已写入 ~/.zshrc"
+  {
+    echo ""
+    echo "${MARKER}"
+    echo "export PATH=\"${RUBY_BIN}:${GEM_BIN}:\$PATH\""
+    echo "# <<< wukong ruby@3.3 <<<"
+  } >>"${ZSHRC}"
+  echo "  已写入 ~/.zshrc"
 fi
 # 幂等验证
 BEFORE=$(grep -c "${MARKER}" "${ZSHRC}")
-if [ -f "${ZSHRC}" ] && grep -q "${MARKER}" "${ZSHRC}"; then
-    : # 不重复写入
+if [[ -f "${ZSHRC}" ]] && grep -q "${MARKER}" "${ZSHRC}"
+then
+  : # 不重复写入
 fi
 AFTER=$(grep -c "${MARKER}" "${ZSHRC}")
-if [ "${BEFORE}" = "${AFTER}" ]; then
-    echo "  PASS（幂等性验证通过）"
+if [[ "${BEFORE}" = "${AFTER}" ]]
+then
+  echo "  PASS（幂等性验证通过）"
 else
-    echo "  FAIL: 重复写入!"
-    exit 1
+  echo "  FAIL: 重复写入!"
+  exit 1
 fi
 
 echo ""

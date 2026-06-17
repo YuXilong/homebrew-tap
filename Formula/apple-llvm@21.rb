@@ -2,8 +2,8 @@ class AppleLlvmAT21 < Formula
   desc "Apple LLVM from Swift project (official upstream, NOT Hikari)"
   homepage "https://github.com/swiftlang/llvm-project"
   url "https://github.com/swiftlang/llvm-project/archive/refs/tags/swift-6.3-RELEASE.tar.gz"
-  sha256 "321c4b5c304533211a324774516f4ea797b03b906725bc27ae447f3aa7924aa4"
   version "21.1.6"
+  sha256 "321c4b5c304533211a324774516f4ea797b03b906725bc27ae447f3aa7924aa4"
   license "Apache-2.0" => { with: "LLVM-exception" }
 
   livecheck do
@@ -243,18 +243,18 @@ class AppleLlvmAT21 < Formula
     assert_equal "Hello World!", shell_output("./test").chomp
 
     # Verify no Hikari options
-    hikari_help = shell_output("#{bin}/clang -mllvm -help 2>&1", 0)
+    hikari_help = shell_output("#{bin}/clang -mllvm -help 2>&1")
     refute_match(/enable-strcry/, hikari_help)
     refute_match(/enable-bcfobf/, hikari_help)
     refute_match(/enable-cffobf/, hikari_help)
 
     # Verify LibTooling headers exist
-    assert_predicate include/"clang/Tooling/Tooling.h", :exist?
-    assert_predicate include/"llvm/ADT/StringRef.h", :exist?
+    assert_path_exists include/"clang/Tooling/Tooling.h"
+    assert_path_exists include/"llvm/ADT/StringRef.h"
 
     # Verify CMake config exists
-    assert_predicate lib/"cmake/clang/ClangConfig.cmake", :exist?
-    assert_predicate lib/"cmake/llvm/LLVMConfig.cmake", :exist?
+    assert_path_exists lib/"cmake/clang/ClangConfig.cmake"
+    assert_path_exists lib/"cmake/llvm/LLVMConfig.cmake"
 
     # Test clang-format
     (testpath/"clangformattest.c").write <<~C

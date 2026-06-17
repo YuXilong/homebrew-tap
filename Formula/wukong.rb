@@ -2,17 +2,16 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  version "3.0.13"
+  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.13"
+  sha256 "09c40b0e651163321573634421c3ee82909162514e7a8d397d5084721853c847"
   license :cannot_represent
 
+  depends_on :macos
   depends_on "ruby@3.3"
 
-  on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_#{version}"
-      sha256 "09c40b0e651163321573634421c3ee82909162514e7a8d397d5084721853c847"
-    elsif Hardware::CPU.intel?
-      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_#{version}"
+  on_intel do
+    on_macos do
+      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_3.0.13"
       sha256 "0ab2f2ff430eaddeb7a92898ddc9e0d07d846933a92783dff04ac21871e9bb62"
     end
   end
@@ -37,10 +36,12 @@ class Wukong < Formula
     end
 
     if needs_link
-      if Kernel.system("rm", "-f", old_wukong) && Kernel.system("ln", "-sf", brew_wukong, old_wukong)
+      begin
+        rm old_wukong
+        ln_sf brew_wukong, old_wukong
         ohai "已将 #{old_wukong} 替换为 -> #{brew_wukong} 的符号链接"
-      else
-        opoo "无法自动替换 #{old_wukong}（sandbox 限制），请手动执行：\n  rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}"
+      rescue SystemCallError => e
+        opoo "无法自动替换 #{old_wukong}（#{e.message}），请手动执行：\n  rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}"
       end
     end
 
@@ -106,7 +107,7 @@ class Wukong < Formula
     rescue => e
       opoo "CocoaPods 插件安装失败: #{e.message}（可稍后手动安装）"
     ensure
-      tmpdir.rmtree if tmpdir.exist?
+      rm_r tmpdir if tmpdir.exist?
     end
   end
 
