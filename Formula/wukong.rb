@@ -45,7 +45,7 @@ class Wukong < Formula
       end
     end
 
-    ruby_bin = Formula["ruby@3.3"].opt_bin
+    ruby_bin = formula_opt_bin("ruby@3.3")
     gem_home = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0"
     gem_bin  = gem_home/"bin"
 
@@ -112,7 +112,7 @@ class Wukong < Formula
   end
 
   def caveats
-    ruby_bin = Formula["ruby@3.3"].opt_bin
+    ruby_bin = formula_opt_bin("ruby@3.3")
     gem_bin  = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
 
     old_wukong = "#{Dir.home}/.local/bin/wukong"
