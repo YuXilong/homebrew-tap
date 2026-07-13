@@ -69,17 +69,17 @@ class Wukong < Formula
       system gem_cmd, "install", "cocoapods", "-v", cocoapods_version, "--no-document"
     end
 
-    # 从 GitHub 最新 release 下载并安装 cocoapods-publish 和 cocoapods-packager
+    # 从固定资产桶 release 下载并安装插件；tag 必须与 WuKong utils::ASSET_BUCKET_TAG 一致
     require "tmpdir"
     tmpdir = Pathname.new(Dir.mktmpdir("wukong_gems"))
 
     begin
-      ohai "正在从 GitHub 获取最新 CocoaPods 插件信息..."
+      ohai "正在从 GitHub 资产桶获取 CocoaPods 插件信息..."
       api_json_file = tmpdir/"release.json"
       system "curl", "-fsSL",
              "-H", "Accept: application/vnd.github+json",
              "-o", api_json_file.to_s,
-             "https://api.github.com/repos/YuXilong/cocoapods-publish/releases/latest"
+             "https://api.github.com/repos/YuXilong/cocoapods-publish/releases/tags/v2.2.0"
 
       require "json"
       assets = JSON.parse(api_json_file.read)["assets"] || []
@@ -129,7 +129,7 @@ class Wukong < Formula
     <<~EOS
       wukong 已安装完成。以下组件已自动安装：
         • CocoaPods 1.15.2
-        • cocoapods-publish / cocoapods-packager（从 GitHub 最新 release）
+        • cocoapods-publish / cocoapods-packager（从 GitHub 固定资产桶）
       #{link_hint}
       请将以下内容添加到 ~/.zshrc（如尚未添加）：
         export PATH="#{ruby_bin}:#{gem_bin}:$PATH"
