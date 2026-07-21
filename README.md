@@ -32,6 +32,10 @@ tap "yuxilong/tap"
 brew "wukong"
 ```
 
+## SwiftDump 自动更新
+
+`swift-dump` Formula 由 GitHub Actions 每小时检查一次：仅接受 `YuXilong/SwiftDump` 的最新正式 `vX.Y.Z` Release，并在下载 ZIP、核对 Release `SHA256SUMS`、执行 `brew style`、`brew audit`、实际安装和 Formula 测试全部通过后提交更新。工作流也支持在 Actions 页面手动触发。
+
 ## 文档
 
 `brew help`、`man brew` 或查看 [Homebrew 官方文档](https://docs.brew.sh)。

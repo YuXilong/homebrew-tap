@@ -1,0 +1,91 @@
+name: Update SwiftDump Formula
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/update-swift-dump.yml"
+      - "scripts/update-swift-dump-formula.py"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-swift-dump-formula
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Verify release and update formula
+    runs-on: macos-26
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out tap
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Verify latest stable release
+        id: release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 scripts/update-swift-dump-formula.py
+
+      - name: Validate updated formula
+        if: steps.release.outputs.changed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git diff --check -- Formula/swift-dump.rb README.md
+          brew style Formula/swift-dump.rb
+
+          brew tap yuxilong/tap
+          tap_directory="$(brew --repo yuxilong/tap)"
+          cp Formula/swift-dump.rb "$tap_directory/Formula/swift-dump.rb"
+
+          brew audit --strict --new --online yuxilong/tap/swift-dump
+          brew install --build-from-source yuxilong/tap/swift-dump
+          brew test yuxilong/tap/swift-dump
+
+          brew_prefix="$(brew --prefix)"
+          formula_prefix="$(brew --prefix swift-dump)"
+          "$brew_prefix/bin/SwiftDump" --version
+          "$brew_prefix/bin/swift-dump" --version
+          lipo -archs "$formula_prefix/bin/SwiftDump" | grep -F arm64
+          lipo -archs "$formula_prefix/bin/SwiftDump" | grep -F x86_64
+          codesign --verify --strict --all-architectures \
+            "$formula_prefix/bin/SwiftDump"
+
+      - name: Commit verified update
+        if: steps.release.outputs.changed == 'true'
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          RELEASE_VERSION: ${{ steps.release.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Formula/swift-dump.rb README.md
+          git commit \
+            -m "Keep SwiftDump formula aligned with $RELEASE_TAG" \
+            -m "The updater verified the public archive against SHA256SUMS, audited the formula, installed it, and ran its tests before publishing this change." \
+            -m "Constraint: Source releases must provide a stable vX.Y.Z tag, Universal ZIP, and SHA256SUMS." \
+            -m "Confidence: high" \
+            -m "Scope-risk: narrow" \
+            -m "Directive: Do not bypass checksum, audit, install, or formula test gates." \
+            -m "Tested: brew style; brew audit --strict --new --online; brew install; brew test; codesign and Universal architecture checks."
+          git push origin HEAD:main
+
+          echo "Updated swift-dump to $RELEASE_VERSION ($RELEASE_TAG)." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Report current formula
+        if: steps.release.outputs.changed != 'true'
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: echo "swift-dump already matches $RELEASE_TAG." >> "$GITHUB_STEP_SUMMARY"
