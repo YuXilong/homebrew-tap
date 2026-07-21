@@ -6,7 +6,7 @@
 
 | Formula | 版本 | 说明 | 架构 |
 |---------|------|------|------|
-| `swift-dump` | 1.2.0 | 从 Mach-O 恢复 Swift 类型定义 | arm64 / x86_64 |
+| `swift-dump` | 1.2.2 | 从 Mach-O 恢复 Swift 类型定义 | arm64 / x86_64 |
 | `wukong` | 3.0.9 | iOS 工程自动化工具集 | arm64 / x86_64 |
 | `wukong-server` | 1.0.4 | WuKong MQTT 消息处理服务 | arm64 |
 | `apple-llvm@19` | 19.1.5 | Apple LLVM（Swift 项目官方上游） | arm64 |
