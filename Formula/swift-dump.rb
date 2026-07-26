@@ -1,8 +1,8 @@
 class SwiftDump < Formula
   desc "Recover Swift type declarations from Mach-O files"
   homepage "https://github.com/YuXilong/SwiftDump"
-  url "https://github.com/YuXilong/SwiftDump/releases/download/v1.2.2/SwiftDump-v1.2.2-macos-universal.zip"
-  sha256 "447e141cb2bcd3d36e5700babbf26a6f9cfb4d4db693c6edfc4d7fb172a0f152"
+  url "https://github.com/YuXilong/SwiftDump/releases/download/v1.2.3/SwiftDump-v1.2.3-macos-universal.zip"
+  sha256 "b8d7a149a6d90a4b6bda006b00f92c8d615043662a4fdc6acfbf8deb81338f9b"
   license "MIT"
 
   depends_on :macos
