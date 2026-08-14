@@ -2,8 +2,8 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.25"
-  sha256 "7ecfd8eb21f8d16bb745d3fdb29da7fc9c4f76f6ab9d30938cd242f231e7d2b5"
+  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.26"
+  sha256 "753c246f630bfdd64d82b718ce027e13db82c88f3e0d055f47468185e5107628"
   license :cannot_represent
 
   depends_on :macos
@@ -11,8 +11,8 @@ class Wukong < Formula
 
   on_intel do
     on_macos do
-      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_3.0.25"
-      sha256 "9ae29c0379334c47e099a18466e7b91b4bd8772e58fca5d3a49a5da480626224"
+      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_3.0.26"
+      sha256 "81b6e36924014f718b356dcf1bbb91c403d2e9d866ad0f98875638b6ed59f65d"
     end
   end
 
@@ -25,118 +25,105 @@ class Wukong < Formula
   end
 
   def post_install
-    # 若 ~/.local/bin/wukong 存在（旧版安装位置），替换为指向 Homebrew 版本的符号链接
-    old_wukong = "#{Dir.home}/.local/bin/wukong"
-    brew_wukong = "#{HOMEBREW_PREFIX}/bin/wukong"
-    needs_link = false
-    if File.exist?(old_wukong) && !File.symlink?(old_wukong)
-      needs_link = true
-    elsif File.symlink?(old_wukong) && File.readlink(old_wukong) != brew_wukong
-      needs_link = true
-    end
-
-    if needs_link
-      begin
-        rm old_wukong
-        ln_sf brew_wukong, old_wukong
-        ohai "已将 #{old_wukong} 替换为 -> #{brew_wukong} 的符号链接"
-      rescue SystemCallError => e
-        opoo "无法自动替换 #{old_wukong}（#{e.message}），请手动执行：\n  rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}"
-      end
+    state_dir = var/"wukong"
+    initialized_stamp = state_dir/"environment-initialized"
+    if initialized_stamp.exist?
+      ohai "WuKong 环境已初始化，跳过 CocoaPods 与插件安装"
+      return
     end
 
     ruby_bin = formula_opt_bin("ruby@3.3")
     gem_home = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0"
-    gem_bin  = gem_home/"bin"
+    gem_bin = gem_home/"bin"
 
-    # 在 sandbox 中必须将 gem 写入 HOMEBREW_PREFIX 可写目录
     ENV["GEM_HOME"] = gem_home.to_s
     ENV["GEM_SPEC_CACHE"] = "#{gem_home}/specs"
     ENV.prepend_path "PATH", gem_bin.to_s
     ENV.prepend_path "PATH", ruby_bin.to_s
 
     gem_cmd = ruby_bin/"gem"
-
-    # 检查 gem 是否已安装指定版本
     installed_gems = `#{gem_cmd} list --local 2>/dev/null`
-
-    # 安装 CocoaPods 1.15.2
-    cocoapods_version = "1.15.2"
-    if installed_gems.match?(/^cocoapods\s.*\b#{Regexp.escape(cocoapods_version)}\b/)
-      ohai "CocoaPods #{cocoapods_version} 已安装，跳过"
-    else
-      ohai "正在安装 CocoaPods #{cocoapods_version}..."
-      system gem_cmd, "install", "cocoapods", "-v", cocoapods_version, "--no-document"
+    required_gems = %w[cocoapods cocoapods-publish cocoapods-packager]
+    if required_gems.all? { |gem_name| installed_gems.match?(/^#{Regexp.escape(gem_name)}\s/) }
+      state_dir.mkpath
+      initialized_stamp.write("existing environment\n")
+      ohai "检测到已有 CocoaPods 环境，已标记为初始化完成"
+      return
     end
 
-    # 从固定资产桶 release 下载并安装插件；tag 必须与 WuKong utils::ASSET_BUCKET_TAG 一致
+    cocoapods_version = "1.15.2"
+    unless installed_gems.match?(/^cocoapods\s.*\b#{Regexp.escape(cocoapods_version)}\b/)
+      ohai "正在安装 CocoaPods #{cocoapods_version}..."
+      unless system gem_cmd, "install", "cocoapods", "-v", cocoapods_version, "--no-document"
+        opoo "CocoaPods 安装失败，可稍后执行 brew postinstall wukong 重试"
+        return
+      end
+    end
+
+    require "json"
     require "tmpdir"
     tmpdir = Pathname.new(Dir.mktmpdir("wukong_gems"))
+    plugins_installed = true
 
     begin
       ohai "正在从 GitHub 资产桶获取 CocoaPods 插件信息..."
       api_json_file = tmpdir/"release.json"
-      system "curl", "-fsSL",
-             "-H", "Accept: application/vnd.github+json",
-             "-o", api_json_file.to_s,
-             "https://api.github.com/repos/YuXilong/cocoapods-publish/releases/tags/v2.2.0"
+      unless system "curl", "-fsSL",
+                    "-H", "Accept: application/vnd.github+json",
+                    "-o", api_json_file.to_s,
+                    "https://api.github.com/repos/YuXilong/cocoapods-publish/releases/tags/v2.2.0"
+        raise "获取 CocoaPods 插件信息失败"
+      end
 
-      require "json"
       assets = JSON.parse(api_json_file.read)["assets"] || []
-
       %w[cocoapods-publish cocoapods-packager].each do |gem_name|
-        asset = assets.find { |a| a["name"].start_with?("#{gem_name}-") && a["name"].end_with?(".gem") }
-        next unless asset
-
-        # 从文件名提取版本号，如 cocoapods-publish-2.7.7.gem -> 2.7.7
-        remote_version = asset["name"].match(/#{Regexp.escape(gem_name)}-(.+)\.gem/)[1]
-
-        if installed_gems.match?(/^#{Regexp.escape(gem_name)}\s.*\b#{Regexp.escape(remote_version)}\b/)
-          ohai "#{gem_name} #{remote_version} 已安装，跳过"
-          next
+        asset = assets.find do |candidate|
+          candidate["name"].start_with?("#{gem_name}-") && candidate["name"].end_with?(".gem")
         end
+        raise "未找到 #{gem_name} 安装包" unless asset
+
+        remote_version = asset["name"].match(/#{Regexp.escape(gem_name)}-(.+)\.gem/)[1]
+        next if installed_gems.match?(/^#{Regexp.escape(gem_name)}\s.*\b#{Regexp.escape(remote_version)}\b/)
 
         ohai "正在安装 #{asset["name"]}..."
         gem_file = tmpdir/asset["name"]
-        system "curl", "-fsSL", "-o", gem_file.to_s, asset["browser_download_url"]
-        system gem_cmd, "install", gem_file.to_s, "--no-document"
-        ohai "已安装 #{asset["name"]}"
+        unless system "curl", "-fsSL", "-o", gem_file.to_s, asset["browser_download_url"]
+          raise "下载 #{asset["name"]} 失败"
+        end
+        unless system gem_cmd, "install", gem_file.to_s, "--no-document"
+          raise "安装 #{asset["name"]} 失败"
+        end
       end
-
-      # 安装 iOS Git Hooks（sandbox 外才能执行 git clone，故放入 caveats 提示）
     rescue => e
-      opoo "CocoaPods 插件安装失败: #{e.message}（可稍后手动安装）"
+      plugins_installed = false
+      opoo "CocoaPods 插件安装失败: #{e.message}（可稍后执行 brew postinstall wukong 重试）"
     ensure
       rm_r tmpdir if tmpdir.exist?
     end
+
+    return unless plugins_installed
+
+    state_dir.mkpath
+    initialized_stamp.write("#{version}\n")
+    ohai "WuKong 环境初始化完成"
   end
 
   def caveats
     ruby_bin = formula_opt_bin("ruby@3.3")
-    gem_bin  = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
-
-    old_wukong = "#{Dir.home}/.local/bin/wukong"
-    brew_wukong = "#{HOMEBREW_PREFIX}/bin/wukong"
-    link_hint = ""
-    if File.exist?(old_wukong) && !File.symlink?(old_wukong)
-      link_hint = <<~HINT
-
-        检测到旧版 wukong，请手动替换为符号链接：
-          rm -f #{old_wukong} && ln -sf #{brew_wukong} #{old_wukong}
-      HINT
-    end
+    gem_bin = HOMEBREW_PREFIX/"lib/ruby/gems/3.3.0/bin"
+    brew_wukong = HOMEBREW_PREFIX/"bin/wukong"
 
     <<~EOS
-      wukong 已安装完成。以下组件已自动安装：
-        • CocoaPods 1.15.2
-        • cocoapods-publish / cocoapods-packager（从 GitHub 固定资产桶）
-      #{link_hint}
+      wukong 已安装完成。CocoaPods 与插件只在首次安装时初始化。
+
       请将以下内容添加到 ~/.zshrc（如尚未添加）：
         export PATH="#{ruby_bin}:#{gem_bin}:$PATH"
 
-      然后执行以下命令完成初始化：
-        source ~/.zshrc
-        wukong update
+      如果旧版 ~/.local/bin/wukong 仍优先于 Homebrew，请执行：
+        "#{brew_wukong}" update
+
+      主动更新 CocoaPods 插件：
+        wukong update --pod-plugins
 
       安装 iOS Git Hooks（可选）：
         curl -fsSL https://raw.githubusercontent.com/BaiTu-iOS/ios-git-hooks/main/install.sh | sh
