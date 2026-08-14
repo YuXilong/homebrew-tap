@@ -3,6 +3,7 @@ class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
   url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.26"
+  version "3.0.26"
   sha256 "753c246f630bfdd64d82b718ce027e13db82c88f3e0d055f47468185e5107628"
   license :cannot_represent
 
