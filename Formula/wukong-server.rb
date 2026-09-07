@@ -2,8 +2,8 @@
 class WukongServer < Formula
   desc "WuKong MQTT 消息处理服务"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong-server_arm64_1.0.14"
-  sha256 "e0fa4895b78fc51b741d5532bbbec3d66fb4b155e674476bdb194274e76a37d4"
+  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong-server_arm64_1.0.15"
+  sha256 "7fbf8bd24dcc14be26fc24bc79ff48f0039674bc3d138121a832fe9f91fd7bb8"
   license :cannot_represent
 
   depends_on arch: :arm64
