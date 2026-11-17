@@ -2,9 +2,9 @@
 class Wukong < Formula
   desc "iOS 工程自动化工具集"
   homepage "https://github.com/YuXilong/cocoapods-publish"
-  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.36"
-  version "3.0.36"
-  sha256 "223ebdd8a918a87e231f7600d0fceeb93fa0069d4d5ee0ca7bbc41e9a44e3dd4"
+  url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_arm64_3.0.37"
+  version "3.0.37"
+  sha256 "4fb50d24384eea6ef1d2c46dd61cce9e64698f45b209dbcd753ecfbf451578fb"
   license :cannot_represent
 
   depends_on :macos
@@ -12,8 +12,8 @@ class Wukong < Formula
 
   on_intel do
     on_macos do
-      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_3.0.36"
-      sha256 "d7605170e0e4fb22735a77181f9d97946e7ac265a30919a60e6643d73a10b1e1"
+      url "https://github.com/YuXilong/cocoapods-publish/releases/download/v2.2.0/wukong_x86_64_3.0.37"
+      sha256 "2f56f9da288360f72b5da0fa487dd248dc83d6035b944b10f2c6d6afee21173f"
     end
   end
 
